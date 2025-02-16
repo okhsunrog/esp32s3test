@@ -28,6 +28,7 @@ esp-idf-svc = { version = "0.51", features = ["critical-section", "embassy-time-
 ws2812-async = "0.2.0"
 smart-leds = "0.4.0"
 anyhow = "1.0.95"
+smart_led_effects = "0.1.8"
 
 [build-dependencies]
 embuild = "0.33"
