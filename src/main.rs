@@ -1,11 +1,12 @@
-use std::time;
-
 use anyhow::Result;
-use esp_idf_svc::hal::{gpio::AnyIOPin, prelude::*, spi::*};
-use smart_led_effects::{
-    strip::{self, EffectIterator},
-    Srgb,
-};
+use edge_executor::LocalExecutor;
+use embassy_time::{Duration, Timer};
+use esp_idf_svc::hal::{gpio::AnyIOPin, prelude::*, spi::*, task::block_on};
+// use smart_led_effects::{
+//     strip::{self, EffectIterator},
+//     Srgb,
+// };
+use smart_leds::SmartLedsWriteAsync;
 use smart_leds::{brightness, RGB8};
 use ws2812_async::{Grb, Ws2812};
 
@@ -14,6 +15,7 @@ const NUM_LEDS: usize = 20;
 fn main() -> Result<()> {
     esp_idf_svc::sys::link_patches();
     esp_idf_svc::log::EspLogger::initialize_default();
+    let local_ex: LocalExecutor = Default::default();
     let p = Peripherals::take()?;
     let spi = p.spi2;
     let led_pin = p.pins.gpio21;
@@ -27,20 +29,23 @@ fn main() -> Result<()> {
     )?;
     let config = config::Config::new().baudrate(3200.kHz().into());
     let device = SpiBusDriver::new(driver, &config)?;
-    let _ws: Ws2812<_, Grb, { 12 * NUM_LEDS }> = Ws2812::new(device);
-    let mut _data = [RGB8::default(); NUM_LEDS];
+    let mut ws: Ws2812<_, Grb, { 12 * NUM_LEDS }> = Ws2812::new(device);
 
-    // loop {
-    //     for j in 0..(256 * 5) {
-    //         for i in 0..NUM_LEDS {
-    //             data[i] = wheel((((i * 256) as u16 / NUM_LEDS as u16 + j as u16) & 255) as u8);
-    //         }
-    //         ws.write(brightness(data.iter().cloned(), 32)).await.ok();
-    //         time::sleep(time::Duration::from_millis(10)).await;
-    //     }
-    // }
+    let task = local_ex.spawn(async move {
+        let mut data = [RGB8::default(); NUM_LEDS];
+        loop {
+            for j in 0..(256 * 5) {
+                for (i, pixel) in data.iter_mut().enumerate() {
+                    *pixel = wheel((((i * 256) as u16 / NUM_LEDS as u16 + j as u16) & 255) as u8);
+                }
+                ws.write(brightness(data.iter().cloned(), 32)).await.ok();
+                Timer::after(Duration::from_millis(10)).await;
+            }
+        }
+    });
 
     log::info!("Hello, world!");
+    block_on(local_ex.run(task));
     Ok(())
 }
 

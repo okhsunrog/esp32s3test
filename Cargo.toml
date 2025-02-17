@@ -28,12 +28,16 @@ esp-idf-svc = { version = "0.51", features = [
   "critical-section",
   "embassy-time-driver",
   "embassy-sync",
+  "alloc",
+  "wake-from-isr"
 ] }
 ws2812-async = { git = "https://github.com/kalkyl/ws2812-async", rev = "2c57fe90f244bd86efed2103f8b95abc8feb4e81" }
 smart-leds = "0.4.0"
 anyhow = "1.0.95"
 smart_led_effects = "0.1.8"
 embedded-hal-async = "1.0.0"
+edge-executor = "0.4.1"
+embassy-time = { version ="0.4", features = ["generic-queue-8"]}
 
 [build-dependencies]
 embuild = "0.33"
