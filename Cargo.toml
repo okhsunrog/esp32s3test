@@ -8,7 +8,7 @@ rust-version = "1.77"
 
 [[bin]]
 name = "esp32s3test"
-harness = false # do not use the built in cargo test harness -> resolve rust-analyzer errors
+harness = false      # do not use the built in cargo test harness -> resolve rust-analyzer errors
 
 [profile.release]
 opt-level = "s"
@@ -24,8 +24,12 @@ experimental = ["esp-idf-svc/experimental"]
 
 [dependencies]
 log = "0.4"
-esp-idf-svc = { version = "0.51", features = ["critical-section", "embassy-time-driver", "embassy-sync"] }
-ws2812-async = "0.2.0"
+esp-idf-svc = { version = "0.51", features = [
+  "critical-section",
+  "embassy-time-driver",
+  "embassy-sync",
+] }
+ws2812-async = { git = "https://github.com/kalkyl/ws2812-async", rev = "2c57fe90f244bd86efed2103f8b95abc8feb4e81" }
 smart-leds = "0.4.0"
 anyhow = "1.0.95"
 smart_led_effects = "0.1.8"
