@@ -1,11 +1,7 @@
 use anyhow::Result;
 use edge_executor::LocalExecutor;
 use embassy_time::{Duration, Timer};
-use esp_idf_svc::hal::{gpio::AnyIOPin, prelude::*, spi::*, task::block_on};
-// use smart_led_effects::{
-//     strip::{self, EffectIterator},
-//     Srgb,
-// };
+use esp_idf_svc::hal::{gpio::AnyIOPin, prelude::*, spi, task::block_on};
 use smart_leds::SmartLedsWriteAsync;
 use smart_leds::{brightness, RGB8};
 use ws2812_async::{Grb, Ws2812};
@@ -20,15 +16,14 @@ fn main() -> Result<()> {
     let spi = p.spi2;
     let led_pin = p.pins.gpio21;
 
-    // do I need to configure it in any special way for DMA to work?
-    let driver: SpiDriver<'_> = SpiDriver::new_without_sclk::<SPI2>(
+    let driver = spi::SpiDriver::new_without_sclk::<spi::SPI2>(
         spi,
         led_pin,
         AnyIOPin::none(),
-        &SpiDriverConfig::new(),
+        &spi::config::DriverConfig::new().dma(spi::Dma::Auto(512)),
     )?;
-    let config = config::Config::new().baudrate(3200.kHz().into());
-    let device = SpiBusDriver::new(driver, &config)?;
+    let config = spi::config::Config::new().baudrate(3200.kHz().into());
+    let device = spi::SpiBusDriver::new(driver, &config)?;
     let mut ws: Ws2812<_, Grb, { 12 * NUM_LEDS }> = Ws2812::new(device);
 
     let task = local_ex.spawn(async move {
